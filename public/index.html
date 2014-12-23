@@ -1,0 +1,93 @@
+<!DOCTYPE HTML>
+<html lang="en-US">
+<head>
+	<meta charset="UTF-8">
+	<title>Real time editing</title>
+	<script src="https://ajax.googleapis.com/ajax/libs/jquery/1.6.2/jquery.min.js"></script>
+	<script src="../socket.io/socket.io.js"></script>
+	<script>
+	$(document).ready(function () {
+		var userName = prompt('Username:');
+		var textarea = $('#area');
+		var socket = io.connect('http://localhost');
+		
+		socket.emit('setUserName', userName);
+		
+		socket.on('someone connected', function (data) {
+			console.log("Someoneconnected");
+			$('#connect').text(userName + ' just connected!');
+		});
+		
+		socket.on('updateMessage', function(data) {
+			msgReceived(data.text);
+		});
+		
+		socket.on('updateNewUser', function(msg, uname) {
+			msgReceived(msg);
+			userName = uname;
+		});
+		
+		function msgReceived(msg){
+			textarea.val("");
+		  	textarea.val(msg);
+		}
+		
+		// getter for clients
+		socket.emit('getClients');
+		// setter for clients
+		socket.on('showClients', function(clients) {
+			console.log(clients);
+			$('#clients li').remove();
+			
+			for(var i = 0; i  < clients.clients.length; i++) {
+				$('#clients').append('<li>' + clients.clients[i].userName + '</li>');
+			}
+		});
+		// Functions that have something to do with users typing.
+		var oldtext = "";
+		
+		/*
+		textarea.keyup(function (event) {
+			// Add color higlighing, for when the user is typing
+			console.log("event");
+			//console.log(event);
+			
+			console.log(event.which);
+			var c= String.fromCharCode(event.keyCode);
+			console.log("Char: " + c);
+			
+			// emit only the value of what you are currently writing, as well?
+			console.log(event.target.value);
+		
+			// should not emit the complete textarea!
+			// Should only emit the text the user i currently typing.
+			socket.emit('writing', textarea.val());
+		});
+		*/
+		
+		textarea.keypress(function (event) {
+			console.log(event.which);
+			console.log(event.keyCode);
+			var c= String.fromCharCode(event.which);
+			
+			console.log(document);
+			
+			console.log(getInputSelection(textarea));
+			
+			console.log("End" + end);
+			
+			console.log("Char: " + c);
+			
+			socket.emit('writing', c);
+		});
+		
+	});
+	
+	</script>
+</head>
+<body>
+	<textarea name="" id="area" cols="30" rows="10"></textarea>
+	<p id="connect"></p>
+	<ul id="clients"></ul>
+</body>
+</html>
